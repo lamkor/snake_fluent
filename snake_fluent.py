@@ -68,7 +68,7 @@ class Canvas:
             pygame.draw.rect(window.win, (0, 255, 0), (Canvas.x_to_px(apple.pos[0]), Canvas.y_to_px(apple.pos[1]),
                                                        gameField.cellSize, gameField.cellSize))
 
-        pygame.draw.rect(window.win, (255, 125, 125),
+        pygame.draw.rect(window.win, (153, 204, 255),
                          (Canvas.x_to_px(snake.headPos[0]), Canvas.y_to_px(snake.headPos[1]),
                           gameField.cellSize, gameField.cellSize))
 
@@ -103,17 +103,7 @@ class Move:
             exit()
 
     @staticmethod
-    def snake_mover():
-        temp = []
-        '''if snake.segmentsPos[0][2] == 'left':
-            temp = [[round(snake.segmentsPos[0][0] - snake.speed, 3), snake.segmentsPos[0][1], 'left']]
-        elif snake.segmentsPos[0][2] == 'right':
-            temp = [[round(snake.segmentsPos[0][0] + snake.speed, 3), snake.segmentsPos[0][1], 'right']]
-        elif snake.segmentsPos[0][2] == 'up':
-            temp = [[snake.segmentsPos[0][0], round(snake.segmentsPos[0][1] - snake.speed, 3), 'up']]
-        elif snake.segmentsPos[0][2] == 'down':
-            temp = [[snake.segmentsPos[0][0], round(snake.segmentsPos[0][1] + snake.speed, 3), 'down']]'''
-
+    def head_move():
         if snake.defaultDirection == 'left':
             snake.headPos = [round(snake.headPos[0] - snake.speed, 3), snake.headPos[1], 'left']
         elif snake.defaultDirection == 'right':
@@ -122,6 +112,27 @@ class Move:
             snake.headPos = [snake.headPos[0], round(snake.headPos[1] - snake.speed, 3), 'up']
         elif snake.defaultDirection == 'down':
             snake.headPos = [snake.headPos[0], round(snake.headPos[1] + snake.speed, 3), 'down']
+
+    @staticmethod
+    def segments_update():
+        newSegmentsPos = [snake.headPos]
+        for segment in snake.segmentsPos[:-1]:
+            newSegmentsPos.append(segment)
+        snake.segmentsPos = newSegmentsPos
+
+    @staticmethod
+    def tail_update():
+        if snake.segmentsPos[-2][2] != snake.segmentsPos[-1][2]:
+            snake.segmentsPos[-1][2] = snake.segmentsPos[-2][2]
+
+        if snake.segmentsPos[-1][2] == 'left':
+            snake.segmentsPos[-1][0] = round(snake.segmentsPos[-1][0] - snake.speed, 3)
+        elif snake.segmentsPos[-1][2] == 'right':
+            snake.segmentsPos[-1][0] = round(snake.segmentsPos[-1][0] + snake.speed, 3)
+        elif snake.segmentsPos[-1][2] == 'up':
+            snake.segmentsPos[-1][1] = round(snake.segmentsPos[-1][1] - snake.speed, 3)
+        elif snake.segmentsPos[-1][2] == 'down':
+            snake.segmentsPos[-1][1] = round(snake.segmentsPos[-1][1] + snake.speed, 3)
 
 
 class Logic:
@@ -140,17 +151,14 @@ class Logic:
             apple.pos = (random.randint(0, gameField.maxXCell - 1), random.randint(0, gameField.maxYCell - 1))
             apple.spawned = True
         # Sprawdza kolizję węża i jabłka. Po co 1? Nie wiem, ale bez jedynki to działa niewłaściwie
-        if (apple.pos[1] < snake.segmentsPos[0][1] + 1 < apple.pos[1] + 1 and apple.pos[0] == snake.segmentsPos[0][
-            0]) or \
-                (apple.pos[0] < snake.segmentsPos[0][0] < apple.pos[0] + 1 and apple.pos[1] == snake.segmentsPos[0][
-                    1]) or \
-                (apple.pos[1] < snake.segmentsPos[0][1] < apple.pos[1] + 1 and apple.pos[0] == snake.segmentsPos[0][
-                    0]) or \
-                (apple.pos[0] < snake.segmentsPos[0][0] + 1 < apple.pos[0] + 1 and apple.pos[1] == snake.segmentsPos[0][
-                    1]):
+        if (apple.pos[1] < snake.headPos[1] + 1 < apple.pos[1] + 1 and apple.pos[0] == snake.headPos[0]) or \
+                (apple.pos[0] < snake.headPos[0] < apple.pos[0] + 1 and apple.pos[1] == snake.headPos[1]) or \
+                (apple.pos[1] < snake.headPos[1] < apple.pos[1] + 1 and apple.pos[0] == snake.headPos[0]) or \
+                (apple.pos[0] < snake.headPos[0] + 1 < apple.pos[0] + 1 and apple.pos[1] == snake.headPos[1]):
             print("Zjadłem :)")
+            apple.eaten = True
             apple.spawned = False
-            # Jak jabłko zjada się, to daje się zgoda na wzrost węża
+            """# Jak jabłko zjada się, to daje się zgoda na wzrost węża
             if snake.segmentsPos[0][2] == 'left':
                 snake.segmentsPos.append([snake.segmentsPos[0][0] + 1, snake.segmentsPos[0][1], 'left'])
             elif snake.segmentsPos[0][2] == 'right':
@@ -158,7 +166,29 @@ class Logic:
             elif snake.segmentsPos[0][2] == 'up':
                 snake.segmentsPos.append([snake.segmentsPos[0][0], snake.segmentsPos[0][1] + 1, 'up'])
             elif snake.segmentsPos[0][2] == 'down':
-                snake.segmentsPos.append([snake.segmentsPos[0][0], snake.segmentsPos[0][1] - 1, 'down'])
+                snake.segmentsPos.append([snake.segmentsPos[0][0], snake.segmentsPos[0][1] - 1, 'down'])"""
+    @staticmethod
+    def snake_grow():
+        if snake.segmentsPos[-2][2] == 'left':
+            temp = snake.segmentsPos[:-1]
+            temp.append([snake.segmentsPos[-2][0] + 1, snake.segmentsPos[-2][1], snake.segmentsPos[-2][2]])
+            temp.append([snake.segmentsPos[-1]])
+            snake.segmentsPos = temp
+        elif snake.segmentsPos[-2][2] == 'right':
+            temp = snake.segmentsPos[:-1]
+            temp.append([snake.segmentsPos[-2][0] - 1, snake.segmentsPos[-2][1], snake.segmentsPos[-2][2]])
+            temp.append([snake.segmentsPos[-1]])
+            snake.segmentsPos = temp
+        elif snake.segmentsPos[-2][2] == 'up':
+            temp = snake.segmentsPos[:-1]
+            temp.append([snake.segmentsPos[-2][0], snake.segmentsPos[-2][1] + 1, snake.segmentsPos[-2][2]])
+            temp.append([snake.segmentsPos[-1]])
+            snake.segmentsPos = temp
+        elif snake.segmentsPos[-2][2] == 'down':
+            temp = snake.segmentsPos[:-1]
+            temp.append([snake.segmentsPos[-2][0], snake.segmentsPos[-2][1] - 1, snake.segmentsPos[-2][2]])
+            temp.append([snake.segmentsPos[-1]])
+            snake.segmentsPos = temp
 
 
 window = Vars.Config(1280, 720, 250)
@@ -168,7 +198,9 @@ gameField = Vars.Screen(_BorderSize, _CellSize, (window.width - 2 * _BorderSize)
 apple = Vars.Apple((random.randint(0, gameField.maxXCell - 1), random.randint(0, gameField.maxYCell)))
 snake = Vars.Snake('left', 0.025)
 
-snake.headPos = [gameField.maxXCell // 2 - 2, gameField.maxYCell // 2, 'left']
+snake.headPos = [gameField.maxXCell // 2 - 1, gameField.maxYCell // 2, 'left']
+snake.segmentsPos.append([gameField.maxXCell // 2, gameField.maxYCell // 2, 'left'])
+snake.segmentsPos.append([gameField.maxXCell // 2, gameField.maxYCell // 2, 'left'])
 snake.segmentsPos.append([gameField.maxXCell // 2, gameField.maxYCell // 2, 'left'])
 snake.segmentsPos.append([gameField.maxXCell // 2 - 1, gameField.maxYCell // 2, 'left'])
 
@@ -185,22 +217,24 @@ def main():
             if event.type == pygame.QUIT:
                 window.run = False
 
+        Move.tail_update()
         Move.key_handler()
         if snake.headPos[0] % 1 == 0.0 and snake.headPos[1] % 1 == 0.0:
             snake.defaultDirection = snake.chosenDirection
-            snake.segmentsPos.append(snake.headPos)
-            snake.segmentsPos.remove(snake.segmentsPos[0])
-
-        if snake.segmentsPos[0][2] == 'left':
+            if apple.eaten:
+                apple.eaten = False
+                Logic.snake_grow()
+            Move.segments_update()
+        """if snake.segmentsPos[0][2] == 'left':
             snake.segmentsPos[0] = [round(snake.segmentsPos[0][0] - snake.speed, 3), snake.segmentsPos[0][1], 'left']
         elif snake.segmentsPos[0][2] == 'down':
             snake.segmentsPos[0] = [snake.segmentsPos[0][0], round(snake.segmentsPos[0][1] + snake.speed, 3), 'down']
         elif snake.segmentsPos[0][2] == 'right':
             snake.segmentsPos[0] = [round(snake.segmentsPos[0][0] + snake.speed, 3), snake.segmentsPos[0][1], 'right']
         elif snake.segmentsPos[0][2] == 'up':
-            snake.segmentsPos[0] = [snake.segmentsPos[0][0], round(snake.segmentsPos[0][1] - snake.speed, 3), 'up']
-        print(snake.segmentsPos)
-        Move.snake_mover()
+            snake.segmentsPos[0] = [snake.segmentsPos[0][0], round(snake.segmentsPos[0][1] - snake.speed, 3), 'up']"""
+        print(snake.headPos, snake.segmentsPos)
+        Move.head_move()
         Logic.apple_handler()
         Logic.crash_checker()
 
