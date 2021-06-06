@@ -1,3 +1,4 @@
+# Logika i poruszanie: Romek Szlachtun 2C
 import pygame
 import random
 
@@ -5,8 +6,9 @@ _BorderSize = 16
 _CellSize = 24
 
 
+# Wyodrębniłem wszystkie definicje zmiennych do klasy Vars
 class Vars:
-    class Config:
+    class Window:
         def __init__(self, width, height, update_rate):
             self.width = width
             self.height = height
@@ -14,7 +16,7 @@ class Vars:
             self.win = pygame.display.set_mode([self.width, self.height])
             self.run = True
 
-    class Screen:
+    class GameField:
         def __init__(self, border_size, cell_size, max_x_cell, max_y_cell):
             self.borderSize = border_size
             self.cellSize = cell_size
@@ -38,6 +40,8 @@ class Vars:
 
 
 class Canvas:
+    # pygame wyświetla elementy wyłącznie w pikselach
+    # funkcje przekształcają siatkę wsp. w pikseli
     @staticmethod
     def x_to_px(x):
         x = x * gameField.cellSize + gameField.borderSize
@@ -48,6 +52,7 @@ class Canvas:
         y = y * gameField.cellSize + 56
         return y
 
+    # Wyświetla interfejs gry
     @staticmethod
     def draw_window():
         # Tło
@@ -67,20 +72,16 @@ class Canvas:
         if apple.spawned:
             pygame.draw.rect(window.win, (0, 255, 0), (Canvas.x_to_px(apple.pos[0]), Canvas.y_to_px(apple.pos[1]),
                                                        gameField.cellSize, gameField.cellSize))
-
+        # Głowa
         pygame.draw.rect(window.win, (153, 204, 255),
                          (Canvas.x_to_px(snake.headPos[0]), Canvas.y_to_px(snake.headPos[1]),
                           gameField.cellSize, gameField.cellSize))
 
+        # Reszta ciała z ogonem
         for segment in range(len(snake.segmentsPos)):
-            if segment == 0:
-                pygame.draw.rect(window.win, (255, 125, 0), (int(Canvas.x_to_px(snake.segmentsPos[segment][0])),
-                                                             int(Canvas.y_to_px(snake.segmentsPos[segment][1])),
-                                                             gameField.cellSize, gameField.cellSize))
-            else:
-                pygame.draw.rect(window.win, (255, 0, 0), (int(Canvas.x_to_px(snake.segmentsPos[segment][0])),
-                                                           int(Canvas.y_to_px(snake.segmentsPos[segment][1])),
-                                                           gameField.cellSize, gameField.cellSize))
+            pygame.draw.rect(window.win, (255, 0, 0), (int(Canvas.x_to_px(snake.segmentsPos[segment][0])),
+                                                       int(Canvas.y_to_px(snake.segmentsPos[segment][1])),
+                                                       gameField.cellSize, gameField.cellSize))
 
         pygame.display.update()
 
@@ -89,6 +90,7 @@ class Move:
     # Sterowanie klawiszami
     @staticmethod
     def key_handler():
+        # Tutaj zapisuje się wybrany kierunek węża, dokąd wąż skręci dopiero jak osiągnie całkowite wspórzędne (wsp.)
         keys = pygame.key.get_pressed()
 
         if keys[pygame.K_RIGHT] and snake.defaultDirection != 'left':
@@ -102,6 +104,7 @@ class Move:
         elif keys[pygame.K_ESCAPE]:
             exit()
 
+    # Algorytm płynnego poruszania głowy po siatce wsp.
     @staticmethod
     def head_move():
         if snake.defaultDirection == 'left':
@@ -113,6 +116,7 @@ class Move:
         elif snake.defaultDirection == 'down':
             snake.headPos = [snake.headPos[0], round(snake.headPos[1] + snake.speed, 3), 'down']
 
+    # Po osiągnięciu głową całkowitych wsp. należy przesunąć nieruchome ciało (poza ogonem) w kierunku głowy
     @staticmethod
     def segments_update():
         newSegmentsPos = [snake.headPos]
@@ -120,8 +124,12 @@ class Move:
             newSegmentsPos.append(segment)
         snake.segmentsPos = newSegmentsPos
 
+    # Ogonem występuje ostatnia część ciała, która płynnie przesuwa się do przedostatniej (nieruchomej) części ciała
+    # Gdy ogon osiąga tą część ciała, ogon usuwa się, i ówczesna przedostatnia część ciała staje się ruchoma i pełni
+    # funkcję ogona
     @staticmethod
     def tail_update():
+        # Usprawnia zawroty ogona węża
         if snake.segmentsPos[-2][2] != snake.segmentsPos[-1][2]:
             snake.segmentsPos[-1][2] = snake.segmentsPos[-2][2]
 
@@ -139,6 +147,7 @@ class Logic:
     # Kolizje
     @staticmethod
     def crash_checker():
+        # Jak węż przekracza granicy ściany, to gra się zamyka
         if snake.segmentsPos[0][0] < 0.0 or snake.segmentsPos[0][0] > float(gameField.maxXCell) or \
                 snake.segmentsPos[0][1] < 0.0 or snake.segmentsPos[0][1] > float(gameField.maxYCell - 1):
             window.run = False
@@ -146,29 +155,26 @@ class Logic:
     # Logika jabłek
     @staticmethod
     def apple_handler():
-        # APPLE_SPAWNED odp. za generację jabłka. Jak go nie ma, to ono generuje się. Jak jest, to nic się nie dzieje
+        # apple.spawned odp. za generację jabłka. Jak go nie ma, to ono generuje się. Jak jest, to nic się nie dzieje
         if not apple.spawned:
             apple.pos = (random.randint(0, gameField.maxXCell - 1), random.randint(0, gameField.maxYCell - 1))
             apple.spawned = True
-        # Sprawdza kolizję węża i jabłka. Po co 1? Nie wiem, ale bez jedynki to działa niewłaściwie
+        # Sprawdza kolizję węża i jabłka. Działa tylko gdy wąż przekracza granice jabłka
         if (apple.pos[1] < snake.headPos[1] + 1 < apple.pos[1] + 1 and apple.pos[0] == snake.headPos[0]) or \
                 (apple.pos[0] < snake.headPos[0] < apple.pos[0] + 1 and apple.pos[1] == snake.headPos[1]) or \
                 (apple.pos[1] < snake.headPos[1] < apple.pos[1] + 1 and apple.pos[0] == snake.headPos[0]) or \
                 (apple.pos[0] < snake.headPos[0] + 1 < apple.pos[0] + 1 and apple.pos[1] == snake.headPos[1]):
             print("Zjadłem :)")
+            # Prawdziwy apple.eaten daje zgodę na wzrost węża
             apple.eaten = True
+            # Daje zgodę na ponowną generację jabłka
             apple.spawned = False
-            """# Jak jabłko zjada się, to daje się zgoda na wzrost węża
-            if snake.segmentsPos[0][2] == 'left':
-                snake.segmentsPos.append([snake.segmentsPos[0][0] + 1, snake.segmentsPos[0][1], 'left'])
-            elif snake.segmentsPos[0][2] == 'right':
-                snake.segmentsPos.append([snake.segmentsPos[0][0] - 1, snake.segmentsPos[0][1], 'right'])
-            elif snake.segmentsPos[0][2] == 'up':
-                snake.segmentsPos.append([snake.segmentsPos[0][0], snake.segmentsPos[0][1] + 1, 'up'])
-            elif snake.segmentsPos[0][2] == 'down':
-                snake.segmentsPos.append([snake.segmentsPos[0][0], snake.segmentsPos[0][1] - 1, 'down'])"""
+
     @staticmethod
     def snake_grow():
+        # Aby zwiększyć wzrost węża, nowy element dodaje się do przedostatniej nieruchomej części ciała
+        # Aby dodać nowy element z właściwej strony, trzeba odczytać kierunek części ciała, który jest niezmienny i
+        # zadany przy jego generacji
         if snake.segmentsPos[-2][2] == 'left':
             temp = snake.segmentsPos[:-1]
             temp.append([snake.segmentsPos[-2][0] + 1, snake.segmentsPos[-2][1], snake.segmentsPos[-2][2]])
@@ -191,21 +197,20 @@ class Logic:
             snake.segmentsPos = temp
 
 
-window = Vars.Config(1280, 720, 250)
-gameField = Vars.Screen(_BorderSize, _CellSize, (window.width - 2 * _BorderSize) // _CellSize - 1,
-                        (window.height - 2 * _BorderSize - 40) // _CellSize)
+# Utworzenie obietków (grupy zmiennych) z klasów w Vars
+# PRZYKLAD: Aby skorzystać ze zmiennej segmentsPos obiektu snake (którego z kolei utworzono od klasy Vars.Snake) należy
+# napisać snake.segmentsPos = 'cokolwiek'
+window = Vars.Window(width=1280, height=720, update_rate=250)
+gameField = Vars.GameField(border_size=_BorderSize, cell_size=_CellSize,
+                           max_x_cell=(window.width - 2 * _BorderSize) // _CellSize - 1,
+                           max_y_cell=(window.height - 2 * _BorderSize - 40) // _CellSize)
 
-apple = Vars.Apple((random.randint(0, gameField.maxXCell - 1), random.randint(0, gameField.maxYCell)))
-snake = Vars.Snake('left', 0.025)
-
-snake.headPos = [gameField.maxXCell // 2 - 1, gameField.maxYCell // 2, 'left']
-snake.segmentsPos.append([gameField.maxXCell // 2, gameField.maxYCell // 2, 'left'])
-snake.segmentsPos.append([gameField.maxXCell // 2, gameField.maxYCell // 2, 'left'])
-snake.segmentsPos.append([gameField.maxXCell // 2, gameField.maxYCell // 2, 'left'])
-snake.segmentsPos.append([gameField.maxXCell // 2 - 1, gameField.maxYCell // 2, 'left'])
-
-
-# snake.lastPos = [gameField.cellSize, gameField.cellSize]
+snake = Vars.Snake(direction='left', speed=0.025)
+apple = Vars.Apple(pos=(random.randint(0, gameField.maxXCell - 1), random.randint(0, gameField.maxYCell)))
+# Na dobry początek utwarza się kilka członów węża i jego początkowy kierunek
+snake.headPos = [gameField.maxXCell // 2, gameField.maxYCell // 2, snake.defaultDirection]
+snake.segmentsPos.append([gameField.maxXCell // 2, gameField.maxYCell // 2, snake.defaultDirection])
+snake.segmentsPos.append([gameField.maxXCell // 2, gameField.maxYCell // 2, snake.defaultDirection])
 
 
 def main():
@@ -216,24 +221,19 @@ def main():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 window.run = False
+        # Aby skorzystać z funkcji należy napisać grupę do której funkcja należy (Canvas, Move, Logic), kropkę i nazwę
+        # samej fukcji
 
-        Move.tail_update()
         Move.key_handler()
+        # Wąż skręca i wydłuża się tylko kiedy znajduje się na granicy siatki współrzędnej
         if snake.headPos[0] % 1 == 0.0 and snake.headPos[1] % 1 == 0.0:
             snake.defaultDirection = snake.chosenDirection
             if apple.eaten:
                 apple.eaten = False
                 Logic.snake_grow()
             Move.segments_update()
-        """if snake.segmentsPos[0][2] == 'left':
-            snake.segmentsPos[0] = [round(snake.segmentsPos[0][0] - snake.speed, 3), snake.segmentsPos[0][1], 'left']
-        elif snake.segmentsPos[0][2] == 'down':
-            snake.segmentsPos[0] = [snake.segmentsPos[0][0], round(snake.segmentsPos[0][1] + snake.speed, 3), 'down']
-        elif snake.segmentsPos[0][2] == 'right':
-            snake.segmentsPos[0] = [round(snake.segmentsPos[0][0] + snake.speed, 3), snake.segmentsPos[0][1], 'right']
-        elif snake.segmentsPos[0][2] == 'up':
-            snake.segmentsPos[0] = [snake.segmentsPos[0][0], round(snake.segmentsPos[0][1] - snake.speed, 3), 'up']"""
-        print(snake.headPos, snake.segmentsPos)
+
+        Move.tail_update()
         Move.head_move()
         Logic.apple_handler()
         Logic.crash_checker()
