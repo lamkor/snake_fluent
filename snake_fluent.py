@@ -15,6 +15,7 @@ class Vars:
             self.updateRate = update_rate
             self.win = pygame.display.set_mode([self.width, self.height])
             self.run = True
+            self.score = 0
 
     class GameField:
         def __init__(self, border_size, cell_size, max_x_cell, max_y_cell):
@@ -27,7 +28,7 @@ class Vars:
         def __init__(self, direction, speed):
             self.headPos = []
             self.segmentsPos = []
-            self.lastPos = []
+            # self.lastPos = []
             self.defaultDirection = direction
             self.chosenDirection = direction
             self.speed = speed
@@ -73,7 +74,7 @@ class Canvas:
             pygame.draw.rect(window.win, (0, 255, 0), (Canvas.x_to_px(apple.pos[0]), Canvas.y_to_px(apple.pos[1]),
                                                        gameField.cellSize, gameField.cellSize))
         # Głowa
-        pygame.draw.rect(window.win, (153, 204, 255),
+        pygame.draw.rect(window.win, (255, 0, 0),
                          (Canvas.x_to_px(snake.headPos[0]), Canvas.y_to_px(snake.headPos[1]),
                           gameField.cellSize, gameField.cellSize))
 
@@ -148,8 +149,8 @@ class Logic:
     @staticmethod
     def crash_checker():
         # Jak węż przekracza granicy ściany, to gra się zamyka
-        if snake.segmentsPos[0][0] < 0.0 or snake.segmentsPos[0][0] > float(gameField.maxXCell) or \
-                snake.segmentsPos[0][1] < 0.0 or snake.segmentsPos[0][1] > float(gameField.maxYCell - 1):
+        if snake.headPos[0] < 0.0 or snake.headPos[0] > float(gameField.maxXCell) or \
+                snake.headPos[1] < 0.0 or snake.headPos[1] > float(gameField.maxYCell - 1):
             window.run = False
 
     # Logika jabłek
@@ -201,6 +202,7 @@ class Logic:
 # PRZYKLAD: Aby skorzystać ze zmiennej segmentsPos obiektu snake (którego z kolei utworzono od klasy Vars.Snake) należy
 # napisać snake.segmentsPos = 'cokolwiek'
 window = Vars.Window(width=1280, height=720, update_rate=250)
+
 gameField = Vars.GameField(border_size=_BorderSize, cell_size=_CellSize,
                            max_x_cell=(window.width - 2 * _BorderSize) // _CellSize - 1,
                            max_y_cell=(window.height - 2 * _BorderSize - 40) // _CellSize)
@@ -222,7 +224,7 @@ def main():
             if event.type == pygame.QUIT:
                 window.run = False
         # Aby skorzystać z funkcji należy napisać grupę do której funkcja należy (Canvas, Move, Logic), kropkę i nazwę
-        # samej fukcji
+        # samej fukcji (23.5, 19.5)
 
         Move.key_handler()
         # Wąż skręca i wydłuża się tylko kiedy znajduje się na granicy siatki współrzędnej
