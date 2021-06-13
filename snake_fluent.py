@@ -286,7 +286,7 @@ def main():
                                              window.height // 2 - font.pressText.get_height() // 2 + 50))
             Move.key_handler()
             pygame.display.update()
-        if window.gameStatus == 'runtime':
+        elif window.gameStatus == 'runtime':
             # Aby skorzystać z funkcji należy napisać grupę do której funkcja należy (Canvas, Move, Logic),
             # kropkę i nazwę samej fukcji
             Move.key_handler()
